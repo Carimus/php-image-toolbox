@@ -1,0 +1,27 @@
+{
+    "name": "carimus/php-image-toolbox",
+    "description": "A toolbox for image manipulation in PHP.",
+    "type": "library",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Carimus",
+            "email": "connect@carimus.com"
+        }
+    ],
+    "autoload": {
+        "psr-4": {
+            "Carimus\\PHPImageToolbox\\": "src/"
+        }
+    },
+    "require": {
+        "php": "^5.6|^7.0",
+        "ext-imagick": "*"
+    },
+    "require-dev": {
+        "phpdocumentor/phpdocumentor": "2.*"
+    },
+    "scripts": {
+        "docs": "phpdoc -d ./src -t ./docs"
+    }
+}

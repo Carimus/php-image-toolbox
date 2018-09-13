@@ -1,0 +1,26 @@
+### Composer
+composer.phar
+/vendor/
+
+### JetBrains
+.idea
+*.iws
+out/
+
+### macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+# Icon must end with two \r
+Icon
+
+
+._*
+.AppleDB
+.AppleDesktop
+Network Trash Folder
+Temporary Items
+.apdisk
+
+### Docs
+/docs
