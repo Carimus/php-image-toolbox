@@ -51,26 +51,40 @@ class PHPImageToolbox
     {
         // Clone the images
         $topLayer = clone $topImage;
+        if (!$topLayer->getImageAlphaChannel()) {
+            $topLayer->setImageAlphaChannel(\Imagick::ALPHACHANNEL_SET);
+        }
         $bottomLayer = clone $bottomImage;
+        if (!$bottomLayer->getImageAlphaChannel()) {
+            $bottomLayer->setImageAlphaChannel(\Imagick::ALPHACHANNEL_SET);
+        }
 
-        // The width will always be the width of the final image
-        $width = $bottomLayer->getImageWidth();
+        // We'll assume the bottom layer is the final size.
+        $imageDimensions = $bottomLayer->getImageGeometry();
+        $width = $imageDimensions['width'];
+        $height = $imageDimensions['height'];
 
-        // The mask height is the height of the fade + it's vertical offset.
-        $maskHeight = $fadeHeight + $fadeOffset;
-
-        // Generate a mask layer from a gradient
-        // The offset portion of the mask at the top (if present) will simply be solid white and then once the fade
-        // starts, it will do so from white to black so that when the mask is applied with
-        // `\Imagick::COMPOSITE_COPYOPACITY`, the composite image will fade from fully opaque at the top to fully
-        // transparent at the bottom.
-        $gradient = new \Imagick();
-        $gradient->newPseudoImage($width, $fadeHeight, 'gradient:#ffffff-#000000');
+        // Create a layer the size of the image that is fully transparent
         $gradientMask = new \Imagick();
-        $gradientMask->newImage($width, $maskHeight, "#ffffff", "jpg");
+        $gradientMask->newImage($width, $height, "transparent", "png");
+
+        // If the fade is offset at all, we need to draw a rectangle of 100% opacity black at the top of the image
+        // that is the height of the offset.
+        if ($fadeOffset > 0) {
+            $offsetRectangle = new \ImagickDraw();
+            $offsetRectangle->setFillColor('#000000');
+            $offsetRectangle->rectangle(0, 0, $width, $fadeOffset);
+            $gradientMask->drawImage($offsetRectangle);
+        }
+
+        // Create a gradient which fades from black to fully transparent starting at whatever vertical fade offset is
+        // desired.
+        $gradient = new \Imagick();
+        $gradient->newPseudoImage($width, $fadeHeight, 'gradient:#000000-transparent');
         $gradientMask->compositeImage($gradient, \Imagick::COMPOSITE_DEFAULT, 0, $fadeOffset);
 
-        // Apply the gradient mask to the top layer
+        // Apply the gradient mask to the top layer using `\Imagick::COMPOSITE_COPYOPACITY` which basically will
+        // copy the opacity values pixel for pixel into the top layer (i.e. black = retain, transparent = delete).
         $topLayer->compositeImage($gradientMask, \Imagick::COMPOSITE_COPYOPACITY, 0, 0);
 
         // Layer the top layer on top of the bottom layer to create the final image.
