@@ -50,35 +50,38 @@ class PHPImageToolbox
     public static function fadeTo(\Imagick $topImage, \Imagick $bottomImage, $fadeHeight, $fadeOffset = 0)
     {
         // Clone the images
-        $fadeLayer = clone $topImage;
-        $finalImage = clone $bottomImage;
+        $topLayer = clone $topImage;
+        $bottomLayer = clone $bottomImage;
 
-        // Crop the fade layer to the region that will be faded
-        // This is the full width of the image starting from the top edge and extending
-        // down ($fadeHeight + $fadeOffset) pixels.
-        $width = $finalImage->getImageWidth();
-        $fadeHeight = intval($fadeHeight);
-        $fadeLayer->cropImage($width, $fadeHeight + $fadeOffset, 0, 0);
+        // The width will always be the width of the final image
+        $width = $bottomLayer->getImageWidth();
+
+        // The mask height is the height of the fade + it's vertical offset.
+        $maskHeight = $fadeHeight + $fadeOffset;
 
         // Generate a mask layer from a gradient
+        // The offset portion of the mask at the top (if present) will simply be solid white and then once the fade
+        // starts, it will do so from white to black so that when the mask is applied with
+        // `\Imagick::COMPOSITE_COPYOPACITY`, the composite image will fade from fully opaque at the top to fully
+        // transparent at the bottom.
         $gradient = new \Imagick();
         $gradient->newPseudoImage($width, $fadeHeight, 'gradient:#ffffff-#000000');
         $gradientMask = new \Imagick();
-        $gradientMask->newImage($width, $fadeHeight, "#000000", "jpg");
-        $gradientMask->compositeImage($gradient, \Imagick::COMPOSITE_COPYOPACITY, 0, 0);
+        $gradientMask->newImage($width, $maskHeight, "#ffffff", "jpg");
+        $gradientMask->compositeImage($gradient, \Imagick::COMPOSITE_DEFAULT, 0, $fadeOffset);
 
-        // Apply the gradient mask to the fade layer
-        $fadeLayer->compositeImage($gradientMask, \Imagick::COMPOSITE_COPYOPACITY, 0, $fadeOffset);
+        // Apply the gradient mask to the top layer
+        $topLayer->compositeImage($gradientMask, \Imagick::COMPOSITE_COPYOPACITY, 0, 0);
 
-        // Layer the fade layer on top of the final image.
-        $finalImage->compositeImage($fadeLayer, \Imagick::COMPOSITE_DEFAULT, 0, 0);
+        // Layer the top layer on top of the bottom layer to create the final image.
+        $bottomLayer->compositeImage($topLayer, \Imagick::COMPOSITE_DEFAULT, 0, 0);
 
         // Cleanup just in case
-        unset($fadeLayer);
+        unset($topLayer);
         unset($gradientMask);
         unset($gradient);
 
-        return $finalImage;
+        return $bottomLayer;
     }
 
     /**
