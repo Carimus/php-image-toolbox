@@ -4,6 +4,9 @@ A toolbox for image manipulation in PHP.
 
 [View documentation here](https://php-image-toolbox-docs.now.sh/)
 
+Uses imagick and has built-in capabilities to determine if IMagick is present
+and supported in the runtime environment.
+
 ## Deploying Docs
 
 [`now`](https://now.sh) is used to deploy the docs.
